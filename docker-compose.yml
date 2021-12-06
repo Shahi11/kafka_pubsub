@@ -1,0 +1,120 @@
+version: "3"
+services:
+  zookeeper-1:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper1
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+  # zookeeper-2:
+  #   image: confluentinc/cp-zookeeper:latest
+  #   container_name: zookeeper2
+  #   ports:
+  #     - "2182:2182"
+  #   environment:
+  #     ZOOKEEPER_SERVER_ID: 2
+  #     ZOOKEEPER_CLIENT_PORT: 2182
+  #     ZOOKEEPER_TICK_TIME: 4000
+  # zookeeper-3:
+  #   image: confluentinc/cp-zookeeper:latest
+  #   container_name: zookeeper3
+  #   ports:
+  #     - "2183:2183"
+  #   environment:
+  #     ZOOKEEPER_SERVER_ID: 3
+  #     ZOOKEEPER_CLIENT_PORT: 2183
+  #     ZOOKEEPER_TICK_TIME: 8000
+  mongo:
+    image: mongo:5.0.3
+    ports:
+      - "27017:27017"
+  kafka-1:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-1
+    depends_on:
+      - zookeeper-1
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka-1
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092, PLAINTEXT_HOST://localhost:19092
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "true"
+    ports:
+      - 19092:19092
+  kafka-2:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-2
+    depends_on:
+      - zookeeper-1
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka-2
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9093, PLAINTEXT_HOST://localhost:19093
+    ports:
+      - 19093:19093
+
+  kafka-3:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-3
+    depends_on:
+      - zookeeper-1
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka-3
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:9094, PLAINTEXT_HOST://localhost:19094
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "true"
+    ports:
+      - 19094:19094
+
+  publisher1:
+    image: publisher1
+    stdin_open: true
+    restart: always
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo
+  publisher2:
+    image: publisher2
+    stdin_open: true
+    restart: always
+    ports:
+      - "4001:4001"
+    depends_on:
+      - mongo
+  publisher3:
+    image: publisher3
+    stdin_open: true
+    restart: always
+    ports:
+      - "4002:4002"
+    depends_on:
+      - mongo
+  client:
+    image: client
+    stdin_open: true
+    ports:
+      - "3000:3000"
+  server:
+    image: server
+    stdin_open: true
+    restart: always
+    ports:
+      - "5000:5000"
+      - "5004:5004"
+    depends_on:
+      - mongo
+      - kafka-1
+      - kafka-2
+      - kafka-3
